@@ -1,0 +1,157 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model case_specs {
+  componentId Int        @id @map("componentid")
+  caseType    String?    @db.VarChar(50) @map("casetype")
+  atx         Boolean?
+  eAtx        Boolean?   @map("e_atx")
+  matx        Boolean?
+  miniItx     Boolean?   @map("mini_itx")
+  ssiCeb      Boolean?   @map("ssi_ceb")
+  ssiEeb      Boolean?   @map("ssi_eeb")
+  components  components @relation(fields: [componentId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  
+  @@map("case_specs")
+}
+
+model categories {
+  id         Int          @id @default(autoincrement())
+  name       String       @unique @db.VarChar(50)
+  components components[]
+}
+
+model components {
+  id                Int                @id
+  name              String             @db.VarChar(500)
+  categoryId        Int                @map("categoryid")
+  price             Decimal?           @db.Decimal(10, 2)
+  imageUrls         String?            @map("imageurls")
+  productUrl        String?            @db.VarChar(500) @map("producturl")
+  description       String?
+  specsJson         String?            @map("specsjson")
+  case_specs        case_specs?
+  categories        categories         @relation(fields: [categoryId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  cpu_specs         cpu_specs?
+  gpu_specs         gpu_specs?
+  hdd_specs         hdd_specs?
+  motherboard_specs motherboard_specs?
+  psu_specs         psu_specs?
+  ram_specs         ram_specs?
+  ssd_specs         ssd_specs?
+  build_components build_components[]
+}
+
+model cpu_specs {
+  componentId Int        @id @map("componentid")
+  cores       Int?
+  threads     Int?
+  baseClock   Decimal?   @db.Decimal(4, 1) @map("baseclock")
+  boostClock  Decimal?   @db.Decimal(4, 1) @map("boostclock")
+  socket      String?    @db.VarChar(20)
+  tdp         Int?
+  l2Cache     Int?       @map("l2cache")
+  l3Cache     Int?       @map("l3cache")
+  process     Int?
+  igpu        String?    @db.VarChar(50)
+  components  components @relation(fields: [componentId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  
+  @@map("cpu_specs")
+}
+
+model gpu_specs {
+  componentId Int        @id @map("componentid")
+  tgp         Int?
+  caseType    String?    @db.VarChar(20) @map("casetype")
+  components  components @relation(fields: [componentId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  
+  @@map("gpu_specs")
+}
+
+model hdd_specs {
+  componentId Int        @id @map("componentid")
+  capacityGb  Int?       @map("capacitygb")
+  rpm         Int?
+  components  components @relation(fields: [componentId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  
+  @@map("hdd_specs")
+}
+
+model motherboard_specs {
+  componentId Int        @id @map("componentid")
+  socket      String?    @db.VarChar(20)
+  chipset     String?    @db.VarChar(20)
+  formFactor  String?    @db.VarChar(20) @map("formfactor")
+  ramType     String?    @db.VarChar(10) @map("ramtype")
+  ramSlots    Int?       @map("ramslots")
+  m2Slots     Int?       @map("m2slots")
+  sataPorts   Int?       @map("sataports")
+  pcix16      Int?       @map("pcix16")
+  pcix1       Int?       @map("pcix1")
+  components  components @relation(fields: [componentId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  
+  @@map("motherboard_specs")
+}
+
+model psu_specs {
+  componentId       Int        @id @map("componentid")
+  power             String?    @db.VarChar(20)
+  certificate80Plus String?    @db.VarChar(50) @map("certificate80plus")
+  modular           Boolean?
+  components        components @relation(fields: [componentId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  
+  @@map("psu_specs")
+}
+
+model ram_specs {
+  componentId   Int        @id @map("componentid")
+  moduleCount   Int?       @map("modulecount")
+  memoryType    String?    @db.VarChar(10) @map("memorytype")
+  totalCapacity String?    @db.VarChar(20) @map("totalcapacity")
+  frequency     String?    @db.VarChar(20)
+  components    components @relation(fields: [componentId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  
+  @@map("ram_specs")
+}
+
+model ssd_specs {
+  componentId Int        @id @map("componentid")
+  capacity    String?    @db.VarChar(20)
+  formFactor  String?    @db.VarChar(20) @map("formfactor")
+  components  components @relation(fields: [componentId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  
+  @@map("ssd_specs")
+}
+
+model users {
+  id        Int      @id @default(autoincrement())
+  username  String   @unique @db.VarChar(50)
+  password  String   @db.VarChar(255)
+  createdAt DateTime @default(now()) @map("createdat")
+  
+  builds builds[]
+}
+
+model builds {
+  id          Int      @id @default(autoincrement())
+  userId      Int      @map("userid")
+  totalPower  Int?     @map("totalpower")
+  createdAt   DateTime @default(now()) @map("createdat")
+  
+  users   users   @relation(fields: [userId], references: [id])
+  build_components build_components[]
+}
+
+model build_components {
+  id          Int @id @default(autoincrement())
+  buildId     Int @map("buildid")
+  componentId Int @map("componentid")
+  
+  builds     builds     @relation(fields: [buildId], references: [id], onDelete: Cascade)
+  components components @relation(fields: [componentId], references: [id], onDelete: Cascade)
+}
