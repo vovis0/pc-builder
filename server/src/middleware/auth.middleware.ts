@@ -1,7 +1,5 @@
 import { Request, Response, NextFunction } from "express";
-import jwt from "jsonwebtoken";
-
-const SECRET = process.env.JWT_SECRET!;
+import { verifyToken } from "../utils/jwt";
 
 export interface AuthRequest extends Request {
   userId?: number;
@@ -13,24 +11,30 @@ export const authMiddleware = (
   next: NextFunction
 ) => {
   try {
-    const header = req.headers.authorization;
+    const authHeader = req.headers.authorization;
 
-    if (!header) {
-      return res.status(401).json({ error: "No token provided" });
+    if (!authHeader) {
+      return res.status(401).json({
+        error: "No token provided",
+      });
     }
 
-    const token = header.split(" ")[1];
+    const token = authHeader.split(" ")[1];
 
     if (!token) {
-      return res.status(401).json({ error: "Invalid token format" });
+      return res.status(401).json({
+        error: "Invalid token format",
+      });
     }
 
-    const decoded = jwt.verify(token, SECRET) as { id: number };
+    const decoded = verifyToken(token);
 
-    req.userId = decoded.id;
+    req.userId = decoded.userId;
 
     next();
-  } catch (err) {
-    return res.status(401).json({ error: "Unauthorized" });
+  } catch (error) {
+    return res.status(401).json({
+      error: "Invalid token",
+    });
   }
 };
